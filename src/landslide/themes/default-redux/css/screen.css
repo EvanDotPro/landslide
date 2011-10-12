@@ -531,3 +531,12 @@ aside {
   z-index: 64;
   display: none;
 }
+
+#presentation_timer {
+  margin-top: 10px;
+  margin-right: 30px;
+  float: right;
+  font-size: 25px;
+  font-family: Monaco, Courier, monospace;
+  visibility: hidden;
+}

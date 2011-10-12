@@ -9,6 +9,7 @@ function main() {
     var expanded = false;
     var hiddenContext = false;
     var blanked = false;
+    var presentationTimer = false;
     var slides = document.getElementsByClassName('slide');
     var touchStartX = 0;
     var spaces = /\s+/, a1 = [''];
@@ -362,6 +363,53 @@ function main() {
         blanked = !blanked;
     };
 
+    
+    var togglePresentationTimer = function() {
+        if (!isPresenterView) {
+            return false;
+        }
+        if (localStorage.getItem('presentertime') === null) {
+            startPresentationTimer(5);
+        } else {
+            updatePresentationTimer();
+        }
+        timerDiv = document.getElementById('presentation_timer'); 
+        timerDiv.style.visibility = presentationTimer ? 'hidden' : 'visible';
+        presentationTimer = !presentationTimer;
+    };
+
+    var startPresentationTimer = function(minutes) {
+        date = new Date();
+        date.setTime(date.getTime() + (60 * minutes * 1000)); // keep cookie for 8 hours 
+        localStorage.setItem('presentertime', date.getTime()); 
+        updatePresentationTimer();
+    };
+
+    var updatePresentationTimer = function() {
+        now = new Date();
+        seconds = Math.floor((now.getTime() - parseInt(getCookieTime())) / 1000);
+        timerDiv = document.getElementById('presentation_timer'); 
+        timerDiv.innerHTML = formatTimer(seconds);
+        setTimeout(function() { updatePresentationTimer(); }, 1000);
+    };
+
+    var getCookieTime = function() {
+        return localStorage.getItem('presentertime');
+    };
+
+    var formatTimer = function(seconds) {
+        overtime = false;
+        if (seconds < 0) {
+            seconds = Math.abs(seconds);
+            overtime = true;
+        }
+        minutes = Math.floor(seconds / 60);
+        seconds = seconds % 60;
+        if (minutes < 10) minutes = "0"+minutes;
+        if (seconds < 10) seconds = "0"+seconds;
+        return (overtime ? 'T-' : '') + minutes + ":" + seconds + (overtime ? '' : ' OVERTIME!');
+    };
+
     var isModifierKey = function(keyCode) {
         switch (keyCode) {
             case 16: // shift
@@ -454,6 +502,9 @@ function main() {
                 break;
             case 84: // t
                 showToc();
+                break;
+            case 90: // z for zeitmesser == timekeeper / timer ('t' was taken already)
+                togglePresentationTimer();
                 break;
         }
     };
