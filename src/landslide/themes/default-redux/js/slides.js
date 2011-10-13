@@ -385,6 +385,9 @@ function main() {
     }
 
     var resetPresentationTimer = function() {
+        if (!isPresenterView) {
+            return false;
+        }
         // js prompt because global event listeners for number keys are set
         minutes = prompt("Enter timer duration in minutes (blank to clear)", "")
         if (minutes === null) {
