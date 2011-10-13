@@ -9,7 +9,7 @@ function main() {
     var expanded = false;
     var hiddenContext = false;
     var blanked = false;
-    var presentationTimer = false;
+    var presentationTimerShown = false;
     var slides = document.getElementsByClassName('slide');
     var touchStartX = 0;
     var spaces = /\s+/, a1 = [''];
@@ -363,38 +363,57 @@ function main() {
         blanked = !blanked;
     };
 
-    
     var togglePresentationTimer = function() {
         if (!isPresenterView) {
             return false;
         }
-        if (localStorage.getItem('presentertime') === null) {
-            startPresentationTimer(5);
+        if (localStorage.getItem('timer') === null) {
+            resetPresentationTimer();
         } else {
             updatePresentationTimer();
+            togglePresentationTimerDiv();
         }
-        timerDiv = document.getElementById('presentation_timer'); 
-        timerDiv.style.visibility = presentationTimer ? 'hidden' : 'visible';
-        presentationTimer = !presentationTimer;
     };
 
-    var startPresentationTimer = function(minutes) {
+    var togglePresentationTimerDiv = function() {
+        if (!isPresenterView) {
+            return false;
+        }
+        timerDiv = document.getElementById('presentation_timer'); 
+        timerDiv.style.visibility = presentationTimerShown ? 'hidden' : 'visible';
+        presentationTimerShown = !presentationTimerShown;
+    }
+
+    var resetPresentationTimer = function() {
+        // js prompt because global event listeners for number keys are set
+        minutes = prompt("Enter timer duration in minutes (blank to clear)", "")
+        if (minutes === null) {
+            return false;
+        }
+        localStorage.removeItem('timer');
+        minutes = minutes.replace(/[^\d\.]/g,'');
+        if (minutes == '') {
+            if (presentationTimerShown) togglePresentationTimerDiv();
+            return true;
+        }
         date = new Date();
-        date.setTime(date.getTime() + (60 * minutes * 1000)); // keep cookie for 8 hours 
-        localStorage.setItem('presentertime', date.getTime()); 
+        date.setTime(date.getTime() + (60 * parseFloat(minutes) * 1000));
+        localStorage.setItem('timer', date.getTime()); 
         updatePresentationTimer();
+        if (!presentationTimerShown) togglePresentationTimer();
     };
 
     var updatePresentationTimer = function() {
-        now = new Date();
-        seconds = Math.floor((now.getTime() - parseInt(getCookieTime())) / 1000);
+        timerTime = localStorage.getItem('timer');
         timerDiv = document.getElementById('presentation_timer'); 
+        if (timerTime === null) {
+            timerDiv.innerHTML = '';
+            return false;
+        }
+        now = new Date();
+        seconds = Math.floor((now.getTime() - parseInt(timerTime)) / 1000);
         timerDiv.innerHTML = formatTimer(seconds);
         setTimeout(function() { updatePresentationTimer(); }, 1000);
-    };
-
-    var getCookieTime = function() {
-        return localStorage.getItem('presentertime');
     };
 
     var formatTimer = function(seconds) {
@@ -407,7 +426,7 @@ function main() {
         seconds = seconds % 60;
         if (minutes < 10) minutes = "0"+minutes;
         if (seconds < 10) seconds = "0"+seconds;
-        return (overtime ? 'T-' : '') + minutes + ":" + seconds + (overtime ? '' : ' OVERTIME!');
+        return (overtime ? 'T-' : 'YOU ARE <strong>') + minutes + ":" + seconds + (overtime ? '' : '</strong> OVER-TIME!');
     };
 
     var isModifierKey = function(keyCode) {
@@ -502,6 +521,9 @@ function main() {
                 break;
             case 84: // t
                 showToc();
+                break;
+            case 88: // x
+                resetPresentationTimer();
                 break;
             case 90: // z for zeitmesser == timekeeper / timer ('t' was taken already)
                 togglePresentationTimer();
